@@ -1,22 +1,23 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-#include "parser.h"
-#include "syntree.h"
 #include "tokenizer.h"
 
-int flag = 1;
-
+/**
+ * This function is called only once when make tokenizer.
+ * 
+ * @param filename name of parsed file
+ * @return tokenizer we can use
+ */
 tokenizer_t mk_tokenizer(char * filename){
   tokenizer_t t = (tokenizer_t)malloc(sizeof(struct tokenizer));
-  FILE * fp = safe_fopen(filename, "r");
-  t->tok.filename = (char *)malloc((strlen(filename)+1)*sizeof(char));
-  int c;
-  t->tok.a = (char *)malloc(sizeof(char) * 100);
-  t->tok.num = (char *)malloc(sizeof(char) * 100);
-  c = fgetc(fp);
-  t->c = c;
+
+  /* open parsed file here */
+  FILE * fp = safe_fopen(filename, "rb");
+  t->tok.a = (char *)malloc(sizeof(char) * 1024);
+  t->tok.num = (char *)malloc(sizeof(char) * 1024);
+  /*TODO: should remove limit of the number of chars*/
+
+
+  /* initialize each element */
+  t->c = fgetc(fp);
   t->fp = fp;
   t->tok.filename = filename;
   t->tok.line_num = 1;
@@ -24,102 +25,130 @@ tokenizer_t mk_tokenizer(char * filename){
   return t;
 }
 
+/**
+ * This function returns current token.
+ *
+ * @param t used toknizer
+ * @return current token
+ */
 token cur_tok(tokenizer_t t){
   return t->tok;
 }
 
+/**
+ * This function returns next token.
+ *
+ * @param t used tokenizer
+ * @return next token
+ */
 token next_tok(tokenizer_t t){
-  if(flag == 0){
-    t->c = fgetc(t->fp);
-  }
-  flag = 0;
-  int i = 0;
-  char a[100];
+  int i = 0; // counter of int-literal and identifier
+  char a[1024];  // temp buffer of strings
+  /*TODO: should remove limit of the number of chars*/
+
+  /* initialize each elements of token */
+  t->tok.kind = TOK_RIDDLE;
+  strcpy(t->tok.num, "");
+  strcpy(t->tok.a, "");
+
+  /* skip ' ',  '\n' and '\t' */
   while((t->c == ' ')|(t->c == '\n')|(t->c == '\t')){
     if(t->c == '\n'){
       t->tok.line_num++;
     }
     t->c = fgetc(t->fp);
   }
+
   switch(t->c){
   case EOF:
     t->tok.kind = TOK_EOF;
+    t->c = fgetc(t->fp);
     break;
   case '(':
     t->tok.kind = TOK_LPAREN;
+    t->c = fgetc(t->fp);
     break;
   case ')':
     t->tok.kind = TOK_RPAREN;
+    t->c = fgetc(t->fp);
     break;
   case '{':
     t->tok.kind = TOK_LBRACE;
+    t->c = fgetc(t->fp);
     break;
   case '}':
     t->tok.kind = TOK_RBRACE;
+    t->c = fgetc(t->fp);
     break;
   case '*':
     t->tok.kind = TOK_MUL;
+    t->c = fgetc(t->fp);
     break;
   case '+':
     t->tok.kind = TOK_PLUS;
+    t->c = fgetc(t->fp);
     break;
   case '-':
     t->tok.kind = TOK_MINUS;
+    t->c = fgetc(t->fp);
     break;
   case '/':
     t->tok.kind = TOK_DIV;
+    t->c = fgetc(t->fp);
     break;
   case '%':
     t->tok.kind = TOK_REM;
+    t->c = fgetc(t->fp);
     break;
   case ';':
     t->tok.kind = TOK_SEMICOLON;
+    t->c = fgetc(t->fp);
     break;
   case ',':
     t->tok.kind = TOK_COMMA;
+    t->c = fgetc(t->fp);
     break;
   default:
     t->tok.kind = TOK_RIDDLE;
     break;
   }
   if(t->c == '<'){
-    t->c = fgetc(t->fp);
-    if(t->c == '='){
+    t->c = fgetc(t->fp); // read one more char
+    if(t->c == '='){ // case of "<="
       t->tok.kind = TOK_LE;
+      t->c = fgetc(t->fp);
     }
-    else{
+    else{ // case of "<"
       t->tok.kind = TOK_LT;
-      flag = 1;
     }
   }
   else if(t->c == '>'){
-    t->c = fgetc(t->fp);
-    if(t->c == '='){
+    t->c = fgetc(t->fp); // read one more char
+    if(t->c == '='){ // case of ">="
       t->tok.kind = TOK_GE;
+      t->c = fgetc(t->fp);
     }
-    else{
+    else{ // case of ">"
       t->tok.kind = TOK_GT;
-      flag = 1;
     }
   }
   else if(t->c == '!'){
-    t->c = fgetc(t->fp);
-    if(t->c == '='){
+    t->c = fgetc(t->fp); // read one more char
+    if(t->c == '='){ // case of "!="
       t->tok.kind = TOK_NEQ;
     }
-    else{
+    else{ // case of "!"
       t->tok.kind = TOK_BANG;
-      flag = 1;
     }
   }
   else if(t->c == '='){
-    t->c = fgetc(t->fp);
-    if(t->c == '='){
+    t->c = fgetc(t->fp); // read one more char
+    if(t->c == '='){ // case of "=="
       t->tok.kind = TOK_EQ;
+      t->c = fgetc(t->fp);
     }
-    else{
+    else{ // case of "="
       t->tok.kind = TOK_ASSIGN;
-      flag = 1;
     }
   } 
   else if((isalpha(t->c))|(t->c == '_')){
@@ -153,7 +182,6 @@ token next_tok(tokenizer_t t){
       t->tok.kind = TOK_ID;
       strcpy(t->tok.a, a);
     }
-    flag = 1;
   }
   else if(isdigit(t->c)){
     t->tok.kind = TOK_INT_LITERAL;
@@ -162,9 +190,104 @@ token next_tok(tokenizer_t t){
       t->c = fgetc(t->fp);
     }
     a[i] = '\0';
-
     strcpy(t->tok.num , a);
-    flag = 1;
   }
   return t->tok;
 }
+
+void print_tok_kind(tokenizer_t t){
+  token tok = cur_tok(t);
+  int line_num = tok.line_num;
+  switch(tok.kind){
+  case TOK_INT_LITERAL:
+    printf("%d:TOK_INT_LITERAL (%s)\n", line_num, t->tok.num);
+    break;
+  case TOK_ID:
+    printf("%d:TOK_ID (%s)\n", line_num, t->tok.a);
+    break;
+  case TOK_INT:
+    printf("%d:TOK_INT\n", line_num);
+    break;
+  case TOK_BREAK:
+    printf("%d:TOK_BREAK\n", line_num);
+    break;
+  case TOK_CONTINUE:
+    printf("%d:TOK_CONTINUE\n", line_num);
+    break;
+  case TOK_ELSE:
+    printf("%d:TOK_ELSE\n", line_num);
+    break;
+  case TOK_IF:
+    printf("%d:TOK_IF\n", line_num);
+    break;
+  case TOK_RETURN:
+    printf("%d:TOK_RETURN\n", line_num);
+    break;
+  case TOK_WHILE:
+    printf("%d:TOK_WHILE\n", line_num);
+    break;
+  case TOK_LPAREN:
+    printf("%d:TOK_LPAREN\n", line_num);
+    break;
+  case TOK_RPAREN:
+    printf("%d:TOK_RPAREN\n", line_num);
+    break;
+  case TOK_LBRACE:
+    printf("%d:TOK_LBRACE\n", line_num);
+    break;
+  case TOK_RBRACE:
+    printf("%d:TOK_RBRACE\n", line_num);
+    break;
+  case TOK_MUL:
+    printf("%d:TOK_MUL\n", line_num);
+    break;
+  case TOK_MINUS:
+    printf("%d:TOK_MINUS\n", line_num);
+    break;
+  case TOK_PLUS:
+    printf("%d:TOK_PLUS\n", line_num);
+    break;
+  case TOK_DIV:
+    printf("%d:TOK_DIV\n", line_num);
+    break;
+  case TOK_REM:
+    printf("%d:TOK_REM\n", line_num);
+    break;
+  case TOK_BANG:
+    printf("%d:TOK_BANG\n", line_num);
+    break;
+  case TOK_LT:
+    printf("%d:TOK_LT\n", line_num);
+    break;
+  case TOK_GT:
+    printf("%d:TOK_GT\n", line_num);
+    break;
+  case TOK_LE:
+    printf("%d:TOK_LE\n", line_num);
+    break;
+  case TOK_GE:
+    printf("%d:TOK_GE\n", line_num);
+    break;
+  case TOK_EQ:
+    printf("%d:TOK_EQ\n", line_num);
+    break;
+  case TOK_NEQ:
+    printf("%d:TOK_NEQ\n", line_num);
+    break;
+  case TOK_SEMICOLON:
+    printf("%d:TOK_SEMICOLON\n", line_num);
+    break;
+  case TOK_ASSIGN:
+    printf("%d:TOK_ASSIGN\n", line_num);
+    break;
+  case TOK_COMMA:
+    printf("%d:TOK_COMMA\n", line_num);
+    break;
+  case TOK_EOF:
+    break;
+  default:
+    printf("** error: This is unexpected token **\n");
+    break;
+  }
+}
+

@@ -295,10 +295,3 @@ program_t mk_program(char * filename, fun_def_list_t ds);
 void pr_expr(FILE * fp, expr_t e);
 void pr_stmt(FILE * fp, stmt_t s);
 void pr_program(FILE * fp, program_t p);
-
-FILE * safe_fopen(char * filename, char * mode);
-void * safe_malloc(ssize_t sz);
-char * safe_strdup(char *);
-
-
-

@@ -6,8 +6,9 @@
 
 int main(int argc, char ** argv){
   FILE * fp = stdout;
-  if (argc < 2 | argc > 3){
+  if ((argc < 2) | (argc > 3)){
     printf("Usage: %s input_file [output_file]\n", argv[0]);
+    exit(1);
   }
   tokenizer_t t = mk_tokenizer(argv[1]);
   program_t p = parse_program(t);

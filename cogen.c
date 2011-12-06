@@ -19,45 +19,49 @@ void cogen_program(FILE * fp, program_t p){
 }
 
 void cogen_program_header(FILE * fp, char * f){
-  /*プログラムのアセンブリヘッダを出力*/
+  /* output header of program */
   fprintf(fp, "\t.file\t\"%s\"\n", f);
   fprintf(fp, "\t.text\n");
 }
 
 void cogen_program_trailer(FILE * fp){
-  /*プログラムのアセンブリフッタを出力*/
+  /* output footer of program */
   fprintf(fp, "\t.ident\t\"GCC: (Ubuntu 4.3.3-5ubuntu4) 4.3.3\"\n");
   fprintf(fp, "\t.section\t.note.GNU-stack,\"\",@progbits\n");
 }
 
 void cogen_fun_def(FILE * fp, fun_def_t d){
-  /*式の結果の格納場所、変数の格納場所を決定する*/
+  /* decide locations each data stored at */
   int frame_sz = cogen_alloc_storage_fun_def(d);
-  /*関数中で使われる環境を作る*/
+  /* make env used in functions */
   env_list_t envs = mk_env();
-  /*引数の割り当て場所を環境に登録*/
+  /* register data locations of args to env */
   set_env_params(d->params, envs);
-  /*最初の決まり文句*/
+
+  /* output header of function */
   cogen_fun_def_header(fp, d->f);
   cogen_prologue(fp, d, frame_sz);
-  /*本体(通常複合文)*/
+  /* body of function */
   cogen_stmt(fp, d->body, envs);
-  /*最後の決まり文句*/
+  /* output footer of function */
   cogen_epilogue(fp, d);
   cogen_fun_def_trailer(fp, d->f);
 }
 
 void cogen_fun_def_header(FILE * fp, char * f){
+  /* output header of function */
   fprintf(fp, ".globl %s\n", f);
   fprintf(fp, "\t.type\t%s, @function\n", f);
   fprintf(fp, "%s:\n", f);
 }
 
 void cogen_fun_def_trailer(FILE *fp, char * f){
+  /* output footer of function */
   fprintf(fp, "\t.size\t%s, .-%s\n", f, f);
 }
 
 void cogen_prologue(FILE * fp, fun_def_t d, int n){
+  /* cogen prologue of function */
   fprintf(fp, "\tpushl\t%%ebp\n");
   fprintf(fp, "\tmovl\t%%esp, %%ebp\n");
   if(n > 0){
@@ -66,6 +70,7 @@ void cogen_prologue(FILE * fp, fun_def_t d, int n){
 }
 
 void cogen_epilogue(FILE * fp, fun_def_t d){
+  /* cogen epilogue of function */
   fprintf(fp, "\tleave\n");
   fprintf(fp, "\tret\n");
 }
@@ -102,11 +107,6 @@ void cogen_stmt(FILE * fp, stmt_t s, env_list_t envs){
 }
 
 void cogen_stmt_return(FILE * fp, stmt_t t, env_list_t envs){
-  char * a;
-  cogen_expr(fp, t->u.e, envs);
-  a = cpy_info(t->info);
-  fprintf(fp, "\tmovl\t%s, %%eax\n", a);
-  free(a);
 }
 
 void cogen_stmt_empty(FILE * fp, stmt_t t, env_list_t envs){
@@ -129,11 +129,6 @@ void cogen_stmt_compound(FILE * fp, stmt_t t, env_list_t envs){
 }
 
 void cogen_stmt_if(FILE * fp, stmt_t t, env_list_t envs){
-  expr_t e = t->u.i.e;
-  stmt_t th = t->u.i.th;
-  stmt_t el = t->u.i.el;
-  cogen_expr(fp, e, envs);
-  fprintf(fp, "" );
 }
 
 void cogen_stmt_while(FILE * fp, stmt_t t, env_list_t envs){
@@ -172,5 +167,3 @@ void cogen_expr_app(FILE * fp, expr_t e, env_list_t envs){
 
 
 }
-
-

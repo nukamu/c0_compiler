@@ -1,5 +1,5 @@
 CC=gcc
-OBJS=parser.o cogen_main.o syntree.o tokenizer.o cogen.o env.o
+OBJS=parser.o cogen_main.o syntree.o tokenizer.o cogen.o env.o util.o
 CFLAGS=-Wall -g
 
 cogen : $(OBJS)
