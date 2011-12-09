@@ -1,3 +1,4 @@
+#include "util.h"
 #include "env.h"
 #include <string.h>
 #include <assert.h>
@@ -19,7 +20,7 @@ int cogen_alloc_storage_stmt(stmt_t st){
   case stmt_kind_break:
     return cogen_alloc_storage_break(st);
   case stmt_kind_expr:
-    return cogen_alloc_storage_expr(st);
+    return cogen_alloc_storage_expr(st->u.e);
   case stmt_kind_compound:
     return cogen_alloc_storage_compound(st);
   case stmt_kind_if:
@@ -69,6 +70,10 @@ env_list_t mk_env(void){
   return (env_list_t)mk_list();
 }
 
+env_t mk_env_entry(void){
+  return (env_t)safe_malloc(sizeof(struct env));
+}
+
 /*引数の割り当て場所を環境に登録*/
 void set_env_params(var_decl_list_t params, env_list_t envs){
   char * a = (char *)malloc(sizeof(char) * 10);
@@ -83,7 +88,7 @@ void set_env_params(var_decl_list_t params, env_list_t envs){
     num = num + 4;
     info->num = num;
     var_decl_t d = var_decl_list_get(params, i);
-    env_t env;
+    env_t env = mk_env_entry();
     env->f = d->v;
     env->info = info;
     add_env_params(envs, env);
