@@ -6,7 +6,7 @@
 
 int main(int argc, char ** argv){
   FILE * fp = stdout;
-  if ((argc < 2) | (argc > 3)){
+  if (argc < 2 || argc > 3){
     printf("Usage: %s input_file [output_file]\n", argv[0]);
     exit(1);
   }
